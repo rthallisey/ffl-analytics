@@ -14,9 +14,10 @@ This gives an overview of all the features of `espnff`
 ### Gather data from a public league
 
 ```python3
->>> from espnff import League
+>>> import league
 >>> league_id = 123456
 >>> year = 2016
 >>> league = League(league_id, year)
->>> league
+>>> print league
 League 123456, 2016 Season
+```

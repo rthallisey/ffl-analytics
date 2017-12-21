@@ -1,11 +1,11 @@
 import requests
 
-from .utils import (two_step_dominance,
+from utils import (two_step_dominance,
                     power_points, )
-from .team import Team
-from .settings import Settings
-from .matchup import Matchup
-from .exception import (PrivateLeagueException,
+from team import Team
+from settings import Settings
+from matchup import Matchup
+from exception import (PrivateLeagueException,
                         InvalidLeagueException,
                         UnknownLeagueException, )
 
