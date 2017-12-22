@@ -1,21 +1,17 @@
-import requests
-
+import request
 from utils import (two_step_dominance,
                     power_points, )
 from team import Team
 from settings import Settings
 from matchup import Matchup
-from exception import (PrivateLeagueException,
-                        InvalidLeagueException,
-                        UnknownLeagueException, )
-
 
 class League(object):
     '''Creates a League instance for Public ESPN league'''
     def __init__(self, league_id, year, espn_s2=None, swid=None):
+        self.request = request.Request(league_id, year)
+
         self.league_id = league_id
         self.year = year
-        self.ENDPOINT = "http://games.espn.com/ffl/api/v2/"
         self.teams = []
         self.espn_s2 = espn_s2
         self.swid = swid
@@ -25,33 +21,9 @@ class League(object):
         return 'League(%s, %s)' % (self.league_id, self.year, )
 
     def _fetch_league(self):
-        params = {
-            'leagueId': self.league_id,
-            'seasonId': self.year
-        }
-
-        cookies = None
-        if self.espn_s2 and self.swid:
-            cookies = {
-                'espn_s2': self.espn_s2,
-                'SWID': self.swid
-            }
-
-        r = requests.get('%sleagueSettings' % (self.ENDPOINT, ), params=params, cookies=cookies)
-        self.status = r.status_code
-        data = r.json()
-
-        if self.status == 401:
-            raise PrivateLeagueException(data['error'][0]['message'])
-
-        elif self.status == 404:
-            raise InvalidLeagueException(data['error'][0]['message'])
-
-        elif self.status != 200:
-            raise UnknownLeagueException('Unknown %s Error' % self.status)
-
-        self._fetch_teams(data)
-        self._fetch_settings(data)
+        league_data = self.request.Get('leagueSettings')
+        self._fetch_teams(league_data)
+        self._fetch_settings(league_data)
 
     def _fetch_teams(self, data):
         '''Fetch teams in league'''
@@ -100,27 +72,13 @@ class League(object):
 
     def scoreboard(self, week=None):
         '''Returns list of matchups for a given week'''
-        params = {
-            'leagueId': self.league_id,
-            'seasonId': self.year
-        }
+
         if week is not None:
             params['matchupPeriodId'] = week
 
-        r = requests.get('%sscoreboard' % (self.ENDPOINT, ), params=params)
-        self.status = r.status_code
-        data = r.json()
+        scoreboard_data = self.request.Get('scoreboard')
 
-        if self.status == 401:
-            raise PrivateLeagueException(data['error'][0]['message'])
-
-        elif self.status == 404:
-            raise InvalidLeagueException(data['error'][0]['message'])
-
-        elif self.status != 200:
-            raise UnknownLeagueException('Unknown %s Error' % self.status)
-
-        matchups = data['scoreboard']['matchups']
+        matchups = scoreboard_data['scoreboard']['matchups']
         result = [Matchup(matchup) for matchup in matchups]
 
         for team in self.teams:
