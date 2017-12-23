@@ -46,6 +46,9 @@ class Request(object):
         try:
             data = r.json()
         except ValueError:
-            print "The url %s%s didn't contain any data" %s(self.api, url)
+            print "The url %s%s didn't contain any data" %(self.api, url)
+            print "parms: %s" % params
+            raise ValueError
+
         self._error_check(data, r.status_code)
         return data

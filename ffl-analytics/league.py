@@ -30,7 +30,7 @@ class League(object):
         teams = data['leaguesettings']['teams']
 
         for team in teams:
-            self.teams.append(Team(teams[team]))
+            self.teams.append(Team(teams[team], self.request))
 
         # replace opponentIds in schedule with team instances
         for team in self.teams:
@@ -69,6 +69,17 @@ class League(object):
         dominance_matrix = two_step_dominance(win_matrix)
         power_rank = power_points(dominance_matrix, teams_sorted, week)
         return power_rank
+
+    def get_teams(self):
+        return self.teams
+
+    def get_team(self, name):
+        for team in range(len(self.teams)):
+            if team.get_teamname() == name:
+                return team
+        print "Couldn't find matching team with name %s" % name
+        print "Teams in this league are %s" % self.teams
+        return None
 
     def scoreboard(self, week=None):
         '''Returns list of matchups for a given week'''
