@@ -8,11 +8,6 @@ Using ESPN's Fantasy Football private API, this package interfaces with
 ESPN Fantasy Football to gather data from any public league.
 
 ## Basic Usage
-
-This gives an overview of all the features of `espnff`
-
-### Gather data from a public league
-
 ```python3
 >>> import league
 >>> league_id = 123456

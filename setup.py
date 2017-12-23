@@ -1,19 +1,19 @@
 from setuptools import setup
 
 setup(
-    name='espnff',
+    name='ffl-analytics',
 
-    packages=['espnff'],
+    packages=['ffl-analytics'],
 
     include_package_data=True,
 
-    version='1.3.1',
+    version='1.0',
 
     description='ESPN fantasy football API',
 
-    author='Rich Barton',
+    author='Ryan Hallisey',
 
-    author_email='rbart65@gmail.com',
+    author_email='rthallisey@gmail.com',
 
     install_requires=['requests>=2.0.0,<3.0.0'],
 
@@ -21,7 +21,7 @@ setup(
 
     tests_require=['nose', 'requests_mock'],
 
-    url='https://github.com/rbarton65/espnff',
+    url='https://github.com/rthallisey/ffl-analytics',
 
     classifiers=[
         'Natural Language :: English',
