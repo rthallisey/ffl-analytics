@@ -6,7 +6,7 @@ class Team(object):
         self.request = request
         self.team_id = data['teamId']
         self.team_abbrev = data['teamAbbrev']
-        self.team_name = "%s %s" % (data['teamLocation'], data['teamNickname'])
+        self.name = "%s %s" % (data['teamLocation'], data['teamNickname'])
         self.division_id = data['division']['divisionId']
         self.division_name = data['division']['divisionName']
         self.wins = data['record']['overallWins']
@@ -68,12 +68,6 @@ class Team(object):
     def get_roster_strings(self, week=None):
         self.get_roster(week)
         return self.roster_strings
-
-    def name(self):
-        return self.team_name
-
-    def get_teamid(self):
-        return self.team_id
 
     def player_changes(self, start_week, end_week=None):
         '''Count the number of different players from start_week to end_week for
