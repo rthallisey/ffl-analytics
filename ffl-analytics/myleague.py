@@ -15,12 +15,16 @@ season_id = 2017
 L = league.League(league_id, season_id)
 print L
 
-teams = L.get_teams()
+teams = L.teams
+
+camNewton = L.get_player("Cam Newton")
+print camNewton.projected_score
 
 fitz = teams[8]
 print fitz.get_roster(1)
 print fitz.get_roster()
 
 for team in teams:
-    print team.name
+    print team.players()
+    print team.scoreboard()
     print team.player_changes(1)

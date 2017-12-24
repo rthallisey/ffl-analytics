@@ -77,3 +77,9 @@ class League(object):
         print "Couldn't find matching team with name %s" % name
         print "Teams in this league are %s" % self.teams
         return None
+
+    def get_player(self, player):
+        for team in self.teams:
+            print team.roster.keys()
+            if player in team.roster.keys():
+                return team.roster[player]
