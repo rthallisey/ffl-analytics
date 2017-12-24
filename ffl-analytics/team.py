@@ -104,7 +104,6 @@ class Team(object):
 
         scoreboard_data = self.request.Get('scoreboard', params)
 
-        print scoreboard_data
         score = {}
         fn = scoreboard_data['scoreboard']['matchups'][0]['teams'][0]['team']['teamLocation']
         ln = scoreboard_data['scoreboard']['matchups'][0]['teams'][0]['team']['teamNickname']
