@@ -5,5 +5,13 @@ class Player(object):
         self.player_name = "%s %s" %(roster['player']['firstName'], roster['player']['lastName'])
         self.player_id = roster['player']['playerId']
 
+        if 'appliedStatTotal' in roster['currentPeriodRealStats']:
+            self.player_score = round(roster['currentPeriodRealStats']['appliedStatTotal'], 1)
+        else:
+            self.player_score = 0
+
+        if 'appliedStatTotal' in roster['currentPeriodProjectedStats']:
+            self.projected_score = round(roster['currentPeriodProjectedStats']['appliedStatTotal'], 1)
+
     def __repr__(self):
         return self.player_name
