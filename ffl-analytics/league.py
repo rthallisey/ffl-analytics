@@ -70,9 +70,6 @@ class League(object):
         power_rank = power_points(dominance_matrix, teams_sorted, week)
         return power_rank
 
-    def get_teams(self):
-        return self.teams
-
     def get_team(self, name):
         for team in range(len(self.teams)):
             if team.get_teamname() == name:
@@ -80,23 +77,3 @@ class League(object):
         print "Couldn't find matching team with name %s" % name
         print "Teams in this league are %s" % self.teams
         return None
-
-    def scoreboard(self, week=None):
-        '''Returns list of matchups for a given week'''
-
-        if week is not None:
-            params['matchupPeriodId'] = week
-
-        scoreboard_data = self.request.Get('scoreboard')
-
-        matchups = scoreboard_data['scoreboard']['matchups']
-        result = [Matchup(matchup) for matchup in matchups]
-
-        for team in self.teams:
-            for matchup in result:
-                if matchup.home_team == team.team_id:
-                    matchup.home_team = team
-                if matchup.away_team == team.team_id:
-                    matchup.away_team = team
-
-        return result

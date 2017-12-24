@@ -83,3 +83,27 @@ class Team(object):
             if player in end_roster:
                 player_count += 1
         return player_count
+
+    def scoreboard(self, week=None):
+        '''Returns a teams matchup for a given week'''
+        params = {
+            'teamId': self.team_id
+        }
+        if week is not None:
+            params['matchupPeriodId'] = week
+
+        scoreboard_data = self.request.Get('scoreboard', params)
+
+        print scoreboard_data
+        score = {}
+        fn = scoreboard_data['scoreboard']['matchups'][0]['teams'][0]['team']['teamLocation']
+        ln = scoreboard_data['scoreboard']['matchups'][0]['teams'][0]['team']['teamNickname']
+        team1 = "%s %s" % (fn, ln)
+        score[team1] = scoreboard_data['scoreboard']['matchups'][0]['teams'][0]['score']
+
+        fn = scoreboard_data['scoreboard']['matchups'][0]['teams'][1]['team']['teamLocation']
+        ln = scoreboard_data['scoreboard']['matchups'][0]['teams'][1]['team']['teamNickname']
+        team2 = "%s %s" % (fn, ln)
+        score[team2] = scoreboard_data['scoreboard']['matchups'][0]['teams'][1]['score']
+
+        return score
