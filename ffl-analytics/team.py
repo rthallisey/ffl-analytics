@@ -62,7 +62,7 @@ class Team(object):
         self.roster_strings = []
         for players in range(len(roster['leagueRosters']['teams'][0]['slots'])):
             p = player.Player(roster['leagueRosters']['teams'][0]['slots'][players])
-            self._add_player(p, p.get_name())
+            self._add_player(p, p.player_name)
         return self.roster
 
     def get_roster_strings(self, week=None):
@@ -107,3 +107,14 @@ class Team(object):
         score[team2] = scoreboard_data['scoreboard']['matchups'][0]['teams'][1]['score']
 
         return score
+
+    def players(self, roster=None, week=None):
+        '''Returns a dict with player names as keys and player ids as values'''
+        if roster is None:
+            roster = self.get_roster(week)
+
+        players = {}
+        for player in roster:
+            players[player.player_name] = player.player_id
+
+        return players
