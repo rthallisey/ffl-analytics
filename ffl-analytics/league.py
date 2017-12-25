@@ -15,6 +15,7 @@ class League(object):
         self.teams = []
         self.espn_s2 = espn_s2
         self.swid = swid
+        self.season_bench_points = {}
         self._fetch_league()
 
     def __repr__(self):
@@ -80,6 +81,21 @@ class League(object):
 
     def get_player(self, player):
         for team in self.teams:
-            print team.roster.keys()
             if player in team.roster.keys():
                 return team.roster[player]
+
+    def get_bench_points(self, week=None):
+        for team in self.teams:
+            points = team.bench_points(week)
+            if team.name in self.season_bench_points:
+                self.season_bench_points[team.name] += points
+            else:
+                self.season_bench_points[team.name] = points
+
+    def get_season_bench_points(self):
+        # Weeks 1-15
+        for week in range(1,16):
+            print "Gathering bench points from week %s" % week
+            self.get_bench_points(week)
+
+        return sorted(self.season_bench_points.iteritems(), key=lambda p: p[1])
