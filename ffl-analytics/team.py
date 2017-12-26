@@ -23,24 +23,9 @@ class Team(object):
         self.season_bench_points = 0
 
         self._fetch_schedule(data)
-        self._fetch_roster()
 
     def __repr__(self):
-        return self.team_name
-
-    def _fetch_roster(self):
-        '''Initialize a teams roster with players from the current week'''
-        params = {
-            'teamIds': [self.team_id],
-            'useCurrentPeriodRealStats' : 'true',
-            'useCurrentPeriodProjectedStats' : 'true',
-        }
-
-        roster = self.request.Get('rosterInfo', params)
-        for players in range(len(roster['leagueRosters']['teams'][0]['slots'])):
-            p = player.Player(roster['leagueRosters']['teams'][0]['slots'][players])
-            name = p.player_name
-            self.roster[name] = p
+        return self.name
 
     def _fetch_schedule(self, data):
         '''Fetch schedule and scores for team'''
@@ -61,28 +46,20 @@ class Team(object):
             self.scores.append(score)
             self.schedule.append(opponentId)
 
+    def fetch_weekly_roster(self, roster, week):
+        '''Initialize a teams roster with players from the every week'''
+        player_dict = {}
+        for players in range(len(roster['slots'])):
+            p = player.Player(roster['slots'][players])
+            name = p.player_name
+            player_dict[name] = p
+            self.roster[week] = player_dict
+
     def players(self, week=None):
         '''Get roster for a given week'''
-        params = {
-            'teamIds': [self.team_id],
-            'useCurrentPeriodRealStats' : 'true',
-            'useCurrentPeriodProjectedStats' : 'true',
-        }
-
-        if week is not None:
-            params['scoringPeriodId'] = week
-
-        roster = self.request.Get('rosterInfo', params)
-
-        #print roster['leagueRosters']['teams'][0]['slots'][0]
-
-        self.roster = {}
-        for players in range(len(roster['leagueRosters']['teams'][0]['slots'])):
-            p = player.Player(roster['leagueRosters']['teams'][0]['slots'][players])
-            name = p.player_name
-            self.roster[name] = p
-
-        return self.roster
+        if week is None:
+            week = max(self.roster.keys())
+        return self.roster[week]
 
     def player_changes(self, start_week, end_week=None):
         '''Count the number of different players from start_week to end_week for

@@ -12,7 +12,7 @@ class League(object):
 
         self.league_id = league_id
         self.year = year
-        self.teams = []
+        self.teams = {}
         self.espn_s2 = espn_s2
         self.swid = swid
         self.season_bench_points = {}
@@ -29,25 +29,44 @@ class League(object):
     def _fetch_teams(self, data):
         '''Fetch teams in league'''
         teams = data['leaguesettings']['teams']
-
+        team_ids = str(teams.keys()).replace("[", "").replace("]", "").replace(" ", "").replace("u", "").replace("'", "")
         for team in teams:
-            self.teams.append(Team(teams[team], self.request))
+            t = Team(teams[team], self.request)
+            self.teams[t.team_id] = t
+
+        self._fetch_rosters(team_ids)
 
         # replace opponentIds in schedule with team instances
-        for team in self.teams:
+        for team in self.teams.values():
             for week, matchup in enumerate(team.schedule):
-                for opponent in self.teams:
+                for opponent in self.teams.values():
                     if matchup == opponent.team_id:
                         team.schedule[week] = opponent
 
         # calculate margin of victory
-        for team in self.teams:
+        for team in self.teams.values():
             for week, opponent in enumerate(team.schedule):
                 mov = team.scores[week] - opponent.scores[week]
                 team.mov.append(mov)
 
-        # sort by team ID
-        self.teams = sorted(self.teams, key=lambda x: x.team_id, reverse=False)
+    def _fetch_rosters(self, team_ids):
+        params = {
+            'teamIds': team_ids,
+            'useCurrentPeriodRealStats' : 'true',
+            'useCurrentPeriodProjectedStats' : 'true',
+        }
+
+        roster = self.request.Get('rosterInfo', params)
+        week = roster['leagueRosters']['scoringPeriodId']
+        # Search from the current week back to the start of the season
+        for week in range(week, 0, -1):
+            for t in range(len(roster['leagueRosters']['teams'])):
+                id = roster['leagueRosters']['teams'][t]['teamId']
+                self.teams[id].fetch_weekly_roster(roster['leagueRosters']['teams'][t], week)
+
+            print "Gathering week %s data..." % week
+            params['scoringPeriodId'] = week
+            roster = self.request.Get('rosterInfo', params)
 
     def _fetch_settings(self, data):
         self.settings = Settings(data)
@@ -76,16 +95,16 @@ class League(object):
             if team.get_teamname() == name:
                 return team
         print "Couldn't find matching team with name %s" % name
-        print "Teams in this league are %s" % self.teams
+        print "Teams in this league are %s" % self.teams.values()
         return None
 
     def get_player(self, player):
-        for team in self.teams:
+        for team in self.teams.values():
             if player in team.roster.keys():
                 return team.roster[player]
 
     def get_bench_points(self, week=None):
-        for team in self.teams:
+        for team in self.teams.values():
             points = team.bench_points(week)
             if team.name in self.season_bench_points:
                 self.season_bench_points[team.name] += points
@@ -95,7 +114,6 @@ class League(object):
     def get_season_bench_points(self):
         # Weeks 1-15
         for week in range(1,16):
-            print "Gathering bench points from week %s" % week
             self.get_bench_points(week)
 
         return sorted(self.season_bench_points.iteritems(), key=lambda p: p[1])

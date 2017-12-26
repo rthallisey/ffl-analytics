@@ -23,7 +23,7 @@ teams = L.teams
 
 player_changes = {}
 bench = {}
-for team in teams:
+for team in teams.values():
     player_changes[team.name] = team.player_changes(1)
 
     points = []
@@ -57,12 +57,12 @@ offline.plot({'data': season_bench_points,
              filename='season-bench-points.html',
 )
 
-original_players = [go.Bar(y=player_changes.values(),
-               x=player_changes.keys()
+remaining_drafted_players = [go.Bar(y=player_changes.values(),
+                                    x=player_changes.keys()
 )]
 
-offline.plot({'data': original_players,
-             'layout': {'title': 'Number of Original Players',
+offline.plot({'data': remaining_drafted_players,
+             'layout': {'title': 'Number of Remaining Drafted Players',
                         'font': dict(size=16)}},
-             filename='org-players.html',
+             filename='remaining-drafted-players.html',
 )
