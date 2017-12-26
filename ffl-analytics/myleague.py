@@ -3,6 +3,10 @@
 import sys
 import os
 
+import plotly.offline as offline
+import plotly.graph_objs as go
+import numpy as np
+
 PROJECT_ROOT = os.path.abspath(os.path.join(
         os.path.dirname(os.path.realpath(__file__))))
 if PROJECT_ROOT not in sys.path:
@@ -17,14 +21,48 @@ print L
 
 teams = L.teams
 
-camNewton = L.get_player("Cam Newton")
-print camNewton.projected_score
-
-fitz = teams[8]
-print fitz.get_roster(1)
-print fitz.get_roster()
-
+player_changes = {}
+bench = {}
 for team in teams:
-    print team.players()
-    print team.scoreboard()
-    print team.player_changes(1)
+    player_changes[team.name] = team.player_changes(1)
+
+    points = []
+    for week in range(1,16):
+        points.append(round(team.bench_points(week), 1))
+
+    bench[team.name] = go.Scatter(
+        x = range(1,16),
+        y = points,
+        mode = 'lines+markers',
+        name = team.name,
+    )
+
+
+weekly_bench_points = bench.values()
+offline.plot({'data': weekly_bench_points,
+             'layout': {'title': 'Number of Weekly Bench Points Scored',
+                        'font': dict(size=16)}},
+             filename='weekly-bench-points.html',
+)
+
+L.get_season_bench_points()
+pts = L.season_bench_points
+season_bench_points = [go.Bar(x=pts.keys(),
+               y=pts.values()
+)]
+
+offline.plot({'data': season_bench_points,
+             'layout': {'title': 'Total Bench Points',
+                        'font': dict(size=16)}},
+             filename='season-bench-points.html',
+)
+
+original_players = [go.Bar(y=player_changes.values(),
+               x=player_changes.keys()
+)]
+
+offline.plot({'data': original_players,
+             'layout': {'title': 'Number of Original Players',
+                        'font': dict(size=16)}},
+             filename='org-players.html',
+)
