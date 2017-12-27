@@ -4,6 +4,7 @@ from utils import (two_step_dominance,
 from team import Team
 from settings import Settings
 from matchup import Matchup
+from cache import Cache
 
 class League(object):
     '''Creates a League instance for Public ESPN league'''
@@ -30,6 +31,7 @@ class League(object):
         '''Fetch teams in league'''
         teams = data['leaguesettings']['teams']
         team_ids = str(teams.keys()).replace("[", "").replace("]", "").replace(" ", "").replace("u", "").replace("'", "")
+
         for team in teams:
             t = Team(teams[team], self.request)
             self.teams[t.team_id] = t
@@ -56,10 +58,27 @@ class League(object):
             'useCurrentPeriodProjectedStats' : 'true',
         }
 
+        # Create a new set a cached data by combining the newest data with
+        # the already cached data in 'new_cached_data'.
+        new_cached_data = {}
+
         roster = self.request.Get('rosterInfo', params)
         week = roster['leagueRosters']['scoringPeriodId']
+        self.current_week = week
+
         # Search from the current week back to the start of the season
-        for week in range(week, 0, -1):
+        # or the latest cached week.
+        #
+        # Cache everything except the current week since it likely to change.
+        #
+        cached = Cache(self.league_id, self.year)
+
+        # We always want to gather the current week since it's never cached
+        print "Gathering week %s data..." % week
+        params['scoringPeriodId'] = week
+        roster = self.request.Get('rosterInfo', params)
+
+        for week in range(week, cached.cached_week, -1):
             for t in range(len(roster['leagueRosters']['teams'])):
                 id = roster['leagueRosters']['teams'][t]['teamId']
                 self.teams[id].fetch_weekly_roster(roster['leagueRosters']['teams'][t], week)
@@ -67,6 +86,26 @@ class League(object):
             print "Gathering week %s data..." % week
             params['scoringPeriodId'] = week
             roster = self.request.Get('rosterInfo', params)
+            new_cached_data[week] = roster
+
+        # Translate the cached 'team_data' keys into ints. Then reverse sort
+        # them and translate them back to strings.
+        #
+        # There's probably a better way to get reverse list order.
+        #
+        try:
+            cached_data = sorted([int(x) for x in cached.cached_data['team_data'].keys()], reverse=True)
+        except:
+            cached_data = []
+        for week in cached_data:
+            for t in range(len(cached.cached_data['team_data'][str(week)]['leagueRosters']['teams'])):
+                id = cached.cached_data['team_data'][str(week)]['leagueRosters']['teams'][t]['teamId']
+                self.teams[id].fetch_weekly_roster(cached.cached_data['team_data'][str(week)]['leagueRosters']['teams'][t], week)
+            print "Using cached week %s data." % week
+            new_cached_data[str(week)] = cached.cached_data['team_data'][str(week)]
+
+        # Cache new data
+        cached.cache_data(new_cached_data, self.current_week)
 
     def _fetch_settings(self, data):
         self.settings = Settings(data)

@@ -37,7 +37,6 @@ for team in teams.values():
         name = team.name,
     )
 
-
 weekly_bench_points = bench.values()
 offline.plot({'data': weekly_bench_points,
              'layout': {'title': 'Number of Weekly Bench Points Scored',
@@ -48,7 +47,7 @@ offline.plot({'data': weekly_bench_points,
 L.get_season_bench_points()
 pts = L.season_bench_points
 season_bench_points = [go.Bar(x=pts.keys(),
-               y=pts.values()
+                              y=pts.values()
 )]
 
 offline.plot({'data': season_bench_points,
