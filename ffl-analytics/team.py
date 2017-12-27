@@ -21,10 +21,16 @@ class Team(object):
         self.roster = {}
 
         self.season_bench_points = 0
+        self.best_player = ()
+        self.average_player_score = {}
+        self.player_scores = {'RB': {}, 'WR': {}, 'QB': {}, 'TE': {}, 'K': {}, 'D/ST': {}, 'Empty': {}}
 
         self._fetch_schedule(data)
 
     def __repr__(self):
+        return self.name
+
+    def __str__(self):
         return self.name
 
     def _fetch_schedule(self, data):
@@ -46,6 +52,24 @@ class Team(object):
             self.scores.append(score)
             self.schedule.append(opponentId)
 
+    def _fetch_player_scores(self, player):
+        if player.name in self.player_scores[player.position].keys():
+            score = self.player_scores[player.position][player.name]
+            if not player.is_benched():
+                score += player.player_score
+            self.player_scores[player.position][player.name] = score
+        else:
+            if not player.is_benched():
+                self.player_scores[player.position][player.name] = player.player_score
+            else:
+                self.player_scores[player.position][player.name] = 0
+
+    def _fetch_best_player(self, player):
+        if self.best_player == ():
+            self.best_player = (player.name, player.player_score)
+        elif self.best_player[1] < self.player_scores[player.position][player.name]:
+            self.best_player = (player.name, self.player_scores[player.position][player.name])
+
     def fetch_weekly_roster(self, roster, week):
         '''Initialize a teams roster with players from the every week'''
         player_dict = {}
@@ -54,6 +78,18 @@ class Team(object):
             name = p.name
             player_dict[name] = p
             self.roster[week] = player_dict
+
+            self._fetch_player_scores(p)
+            self._fetch_best_player(p)
+
+    def get_avg_player_score(self, num_weeks):
+        for position in self.player_scores:
+            avg = 0
+            for player in self.player_scores[position]:
+                avg += self.player_scores[position][player]
+            self.average_player_score[position] = avg/num_weeks
+        self.average_player_score.pop('Empty', None)
+        return self.average_player_score
 
     def players(self, week=None):
         '''Get roster for a given week'''

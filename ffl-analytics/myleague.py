@@ -22,26 +22,50 @@ print L
 teams = L.teams
 
 player_changes = {}
-bench = {}
+bench = []
+best_player = []
+best_player_score = []
+team_names = []
+avg_points = []
 for team in teams.values():
-    player_changes[team.name] = team.player_changes(1)
+    # Need a better way to get team names in a list
+    # __str__ and __repr__ aren't working
+    # Nees team names in the same order as players
+    team_names.append(team.name)
+    best_player.append(team.best_player[0])
+    best_player_score.append(team.best_player[1])
 
+    player_changes[team.name] = team.player_changes(1)
     points = []
     for week in range(1,16):
         points.append(round(team.bench_points(week), 1))
 
-    bench[team.name] = go.Scatter(
+    bench.append(go.Scatter(
         x = range(1,16),
         y = points,
         mode = 'lines+markers',
         name = team.name,
-    )
+    ))
 
-weekly_bench_points = bench.values()
-offline.plot({'data': weekly_bench_points,
+    team.get_avg_player_score(16)
+    avg_points.append(go.Scatter(
+        x = team.average_player_score.keys(),
+        y = team.average_player_score.values(),
+        mode = 'lines+markers',
+        name = team.name,
+    ))
+
+
+offline.plot({'data': bench,
              'layout': {'title': 'Number of Weekly Bench Points Scored',
                         'font': dict(size=16)}},
              filename='weekly-bench-points.html',
+)
+
+offline.plot({'data': avg_points,
+             'layout': {'title': 'Average Points Per Position',
+                        'font': dict(size=16)}},
+             filename='avg-points-position.html',
 )
 
 L.get_season_bench_points()
@@ -54,6 +78,17 @@ offline.plot({'data': season_bench_points,
              'layout': {'title': 'Total Bench Points',
                         'font': dict(size=16)}},
              filename='season-bench-points.html',
+)
+
+best_players = [go.Bar(x=team_names,
+                       y=best_player_score,
+                       text=best_player,
+)]
+
+offline.plot({'data': best_players,
+              'layout': {'title': 'Most Points From A Player',
+                         'font': dict(size=16)}},
+             filename='most-points-from-players.html',
 )
 
 remaining_drafted_players = [go.Bar(y=player_changes.values(),
