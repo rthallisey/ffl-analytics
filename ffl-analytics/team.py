@@ -51,7 +51,7 @@ class Team(object):
         player_dict = {}
         for players in range(len(roster['slots'])):
             p = player.Player(roster['slots'][players])
-            name = p.player_name
+            name = p.name
             player_dict[name] = p
             self.roster[week] = player_dict
 
