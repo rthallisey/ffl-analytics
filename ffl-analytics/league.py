@@ -8,15 +8,18 @@ from cache import Cache
 
 class League(object):
     '''Creates a League instance for Public ESPN league'''
-    def __init__(self, league_id, year, espn_s2=None, swid=None):
+    def __init__(self, league_id, year, season_length, espn_s2=None, swid=None):
         self.request = request.Request(league_id, year)
 
+        self.season_length = season_length
         self.league_id = league_id
         self.year = year
         self.teams = {}
         self.espn_s2 = espn_s2
         self.swid = swid
         self.season_bench_points = {}
+        self.avg_player_scores = {'RB': 0, 'WR': 0, 'QB': 0, 'TE': 0, 'K': 0, 'D/ST': 0}
+
         self._fetch_league()
 
     def __repr__(self):
@@ -151,8 +154,18 @@ class League(object):
                 self.season_bench_points[team.name] = points
 
     def get_season_bench_points(self):
-        # Weeks 1-15
-        for week in range(1,16):
+        for week in range(1,self.season_length+1):
             self.get_bench_points(week)
-
         return sorted(self.season_bench_points.iteritems(), key=lambda p: p[1])
+
+    def get_league_avg_points_per_position(self):
+        avg = {}
+        for team in self.teams.values():
+            avg = team.player_scores
+            for pos in avg:
+                count = team.position_count[pos]
+                if pos != "Empty":
+                    for player in avg[pos]:
+                        self.avg_player_scores[pos] += avg[pos][player]
+                    self.avg_player_scores[pos] = self.avg_player_scores[pos]/count
+        return self.avg_player_scores
