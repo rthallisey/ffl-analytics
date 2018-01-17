@@ -3,16 +3,13 @@
 import sys
 import os
 
-import plotly.offline as offline
-import plotly.graph_objs as go
-import numpy as np
-
 PROJECT_ROOT = os.path.abspath(os.path.join(
         os.path.dirname(os.path.realpath(__file__))))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 import league
+import plot
 
 league_id = 361793
 season_id = 2017
@@ -24,18 +21,34 @@ teams = L.teams
 
 pos_avg = L.get_league_avg_points_per_position()
 
+plot_data = {
+    'name': '',
+    'x': list(),
+    'y': list(),
+    'plot_type': '',
+    'text': '',
+    'title': '',
+    'filename': '',
+}
+
 player_changes = {}
-bench = []
 best_player = []
 best_player_score = []
 team_names = []
-avg_points = []
 scoreboards = {}
 
-mvp = []
 new_points = []
 old_points = []
 opponents_points = []
+mvp_value = {}
+
+plot_data['filename'] = "weekly-bench-points.html"
+plot_data['title'] = "Weekly Bench Points Scored"
+BenchPlot = plot.Plot(plot_data)
+
+plot_data['filename'] = "avg-points-position.html"
+plot_data['title'] = "Average Weekly Points Per Position from an Active Roster"
+Average_points_plot = plot.Plot(plot_data)
 for team in teams.values():
     # Need a better way to get team names in a list
     # __str__ and __repr__ aren't working
@@ -45,7 +58,6 @@ for team in teams.values():
     best_player_score.append(team.best_player['total_points'])
     print team.best_player['player']
 
-    mvp = []
     new_points = []
     old_points = []
     opponents_points = []
@@ -89,90 +101,63 @@ for team in teams.values():
         new_points.append(new_score)
         old_points.append(real_scoreboard[team.name])
 
-    bench.append(go.Scatter(
-        x = range(1,17),
-        y = points,
-        mode = 'lines+markers',
-        name = team.name,
-    ))
+        if team not in mvp_value:
+            mvp_value[team] = (0, team.best_player['player'])
+        if not real_scoreboard['win'] and adjusted_scoreboard['win']:
+            mvp_value[team] = (mvp_value[team][0]-1, team.best_player['player'])
+        elif real_scoreboard['win'] and not adjusted_scoreboard['win']:
+            # MVP got you x amount of wins vs the avg player at the position
+            mvp_value[team] = (mvp_value[team][0]+1, team.best_player['player'])
+
+    BenchPlot.scatter(range(1, 17), points, team.name)
 
     team.get_avg_player_score(16)
-    avg_points.append(go.Scatter(
-        x = team.average_player_score.keys(),
-        y = team.average_player_score.values(),
-        mode = 'lines+markers',
-        name = team.name,
-    ))
+    Average_points_plot.scatter(team.average_player_score.keys(), team.average_player_score.values(), team.name)
 
-    # Show how important a team's best player was
-    mvp.append(go.Scatter(
-        x = range(1,17),
-        y = opponents_points,
-        mode = 'lines+markers',
-        name = "Opponent's Score",
-    ))
+    plot_data['filename'] = "best-to-avg-%s.html" % team.name
+    plot_data['title'] = "Life Without Your Best Player"
+    MVP_plot = plot.Plot(plot_data)
+    MVP_plot.scatter(range(1, 17), opponents_points, "Opponent's Score")
+    MVP_plot.scatter(range(1, 17), new_points, "With a %s scoring the position average" % team.best_player['position'])
+    MVP_plot.scatter(range(1, 17), old_points, "With %s" % team.best_player['player'])
+    MVP_plot.plot_offline()
+    # MVP_plot.plot()
 
-    mvp.append(go.Scatter(
-        x = range(1,17),
-        y = new_points,
-        mode = 'lines+markers',
-        name = 'With a %s scoring the position average' % team.best_player['position'],
-    ))
 
-    mvp.append(go.Scatter(
-        x = range(1,17),
-        y = old_points,
-        mode = 'lines+markers',
-        name = 'With %s' % team.best_player['player'],
-    ))
+BenchPlot.plot_offline()
+# Benchplot.plot()
 
-    offline.plot({'data': mvp,
-                  'layout': {'title': 'Life Without Your Best Player',
-                             'font': dict(size=16)}},
-                 filename='best-to-avg-%s.html' % team.name,
-    )
+Average_points_plot.plot_offline()
+# Average_points_plot.plot()
 
-offline.plot({'data': bench,
-             'layout': {'title': 'Weekly Bench Points Scored',
-                        'font': dict(size=16)}},
-             filename='weekly-bench-points.html',
-)
-
-offline.plot({'data': avg_points,
-             'layout': {'title': 'Average Weekly Points Per Position from an Active Roster',
-                        'font': dict(size=16)}},
-             filename='avg-points-position.html',
-)
+plot_data['filename'] = "team_mvp_value.html"
+plot_data['title'] = "Team MVP value"
+MVP_win_changes = plot.Plot(plot_data)
+MVP_win_changes.bar([str(v) for v in mvp_value.keys()],
+                        [v[0] for v in mvp_value.values()],
+                        [v[1] for v in mvp_value.values()])
+MVP_win_changes.plot_offline()
+# MVP_win_changes.plot()
 
 L.get_season_bench_points()
 pts = L.season_bench_points
-season_bench_points = [go.Bar(x=pts.keys(),
-                              y=pts.values()
-)]
+plot_data['filename'] = "season-bench-points.html"
+plot_data['title'] = "Total Bench Points"
+Season_bench_points = plot.Plot(plot_data)
+Season_bench_points.bar(pts.keys(), pts.values())
+Season_bench_points.plot_offline()
+# Season_bench_points.plot()
 
-offline.plot({'data': season_bench_points,
-             'layout': {'title': 'Total Bench Points',
-                        'font': dict(size=16)}},
-             filename='season-bench-points.html',
-)
+plot_data['filename'] = "most-points-from-players.html"
+plot_data['title'] = "Most Points from a Player from an Active Roster"
+Season_bench_points = plot.Plot(plot_data)
+Season_bench_points.bar(team_names, best_player_score, best_player)
+Season_bench_points.plot_offline()
+# Season_bench_points.plot()
 
-best_players = [go.Bar(x=team_names,
-                       y=best_player_score,
-                       text=best_player,
-)]
-
-offline.plot({'data': best_players,
-              'layout': {'title': 'Most Points from a Player from an Active Roster',
-                         'font': dict(size=16)}},
-             filename='most-points-from-players.html',
-)
-
-remaining_drafted_players = [go.Bar(y=player_changes.values(),
-                                    x=player_changes.keys()
-)]
-
-offline.plot({'data': remaining_drafted_players,
-             'layout': {'title': 'Number of Remaining Drafted Players',
-                        'font': dict(size=16)}},
-             filename='remaining-drafted-players.html',
-)
+plot_data['filename'] = "remaining-drafted-players.html"
+plot_data['title'] = "Number of Remaining Drafted Players"
+Remaining_drafted_players = plot.Plot(plot_data)
+Remaining_drafted_players.bar(player_changes.keys(), player_changes.values())
+Remaining_drafted_players.plot_offline()
+# Remaining_drafted_players.plot()
